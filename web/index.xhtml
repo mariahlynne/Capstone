@@ -1,0 +1,438 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+    <script src="js/jquery-1.9.1.min.js" type="text/javascript"></script>
+    <script src="js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="js/main.js" type="text/javascript"></script>
+
+    <f:view contentType="text/html">
+        <h:head>
+            <f:facet name="first">
+                <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+                <title>Welcome</title>
+            </f:facet>
+            <link href="css/bootstrap.min.css" rel="stylesheet" media="screen"/>
+            <link href="css/main.css" rel="stylesheet" media="screen"/>
+        </h:head>
+
+        <h:body>
+            <h:form id="form">
+                <p:layout fullPage="true">
+
+                    <p:layoutUnit position="north" size="100" resizable="true" closable="true" collapsible="true">
+                        Header
+                    </p:layoutUnit>
+
+                    <p:layoutUnit position="west" size="275" >
+                            <p:messages id="messages" closable="true"/>  
+                            <div class="btn-toolbar">
+                                <div class="btn-group">
+                                    <button class="btn btn-info dropdown-toggle" data-toggle="dropdown">Pages <span class="caret"></span></button>
+                                    <ul class="dropdown-menu">
+                                        <li><p:commandLink action="#{bean.addPage()}" value="Add Page" update="treeSingle" /></li>
+                                        <li><p:commandLink type="button" value="Remove Page" action='#{bean.checkNode("remove page")}' update="messageDialog confirmationDialog"/></li>
+                                        <li><p:commandLink action="window.alert('This will pop up a modal to allow the user to rearrange the questions');" 
+                                                           value="Reorder Pages" update="treeSingle" /></li>
+
+                                    </ul>
+                                </div>
+                                <div class="btn-group">
+                                    <button class="btn btn-info dropdown-toggle" data-toggle="dropdown">Questions <span class="caret"></span></button>
+                                    <ul class="dropdown-menu">
+                                        <li><p:commandLink action="#{bean.addQuestion()}" value="Add Question" update="treeSingle" /></li>
+                                        <li><p:commandLink value="Remove Question" type="button" action='#{bean.checkNode("remove question")}' update="messageDialog confirmationDialog"/></li>
+                                        <li><p:commandLink action="window.alert('This will pop up a modal to allow the user to reorder the questions);" 
+                                                           value="Reorder Questions" update="treeSingle" /></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <p:confirmDialog id="confirmationDialog" message="#{bean.removeString}" appendToBody="true"
+                                             header="Warning" severity="alert" widgetVar="confirmationDialog" >  
+
+                                <p:commandButton value="Yes" update="treeSingle" oncomplete="confirmationDialog.hide()"  actionListener="#{bean.removeNode()}" />  
+                                <p:commandButton value="Cancel" onclick="confirmationDialog.hide()" type="button" />   
+
+                            </p:confirmDialog>
+                            <p:confirmDialog id="messageDialog" message="#{bean.removeString}" widgetVar="messageDialog" appendToBody="true">
+                                <p:commandButton value="OK" oncomplete="messageDialog.hide()" /> 
+                            </p:confirmDialog>
+                            <p:growl id="growl" showDetail="true" />
+
+
+                            <p:tree id="treeSingle" value="#{bean.root}" var="node" selectionMode="single" style="width: auto">
+                                <p:ajax event="select" listener="#{bean.onNodeSelect}" />
+                                <p:treeNode>
+                                    <h:outputText value="#{node}" />
+                                </p:treeNode>
+                            </p:tree>
+                    </p:layoutUnit>
+
+                    <p:layoutUnit position="center" id="mainSection">
+
+                        <div id="pageSection">
+                            This will show how all of the questions for this page will appear.
+                        </div>
+                        <div class="well well-small" id="questionTextSection">
+                            <h:outputLabel id="questionTextLabel" for="questionText" value="Question Text:" class ="boldLabel"/>
+                            <h:inputTextarea id="questionText" requiredMessage="Please enter the question text" value="#{bean.questionText}" 
+                                             rows="3" style="width: 97%">
+                                <!--<f:validateLength maximum="1000"></f:validateLength>-->
+                            </h:inputTextarea>
+                        </div>
+                        <div class="well well-small" id="requiredCheckboxSection">
+                            <div class="checkbox">
+                                <label for="isRequired" class ="boldLabel">
+                                    <input type="checkbox" id="isRequired" value="#{bean.isRequired}" onchange="showHideRequiredSection()"/>
+                                    <span>Require an answer for this question</span>
+                                </label>
+                            </div>
+                            <div id="requiredSection">
+                                <br />
+                                <h:outputLabel id="requiredErrorMessageLabel" for="requiredErrorMessage"><b>Error Message:</b> Displayed when the question is not answered</h:outputLabel>
+                                <h:inputTextarea id="requiredErrorMessage" requiredMessage="Please enter the question text" value="#{bean.errorMessage}" 
+                                                 rows="2" required="true" style="width: 97%">
+                                    <!--<f:validateLength maximum="1000"></f:validateLength>-->
+                                </h:inputTextarea>
+                            </div>
+                        </div>
+                        <div class="well well-small" id="questionTypeSection">
+                            <h:outputLabel id="questionTypeLabel" for="questionType" value="Type:" class ="boldLabel"/>
+                            <h:selectOneMenu id="questionType" onchange="showCorrectQuestionSettings()" style="width: auto" value="#{bean.type}">
+                                <f:selectItem itemLabel="Choose Question Type" itemValue="none"/>
+                                <f:selectItem itemLabel="Text" itemValue="text"/>
+                                <f:selectItem itemLabel="Whole Number" itemValue="wholeNumber"/>
+                                <f:selectItem itemLabel="Decimal Number" itemValue="decimalNumber"/>
+                                <f:selectItem itemLabel="Date (MM/DD/YYYY)" itemValue="date"/>
+                                <f:selectItem itemLabel="Multiple Choice" itemValue="multipleChoice"/>
+                            </h:selectOneMenu>
+
+                            <!-- Text Section -->
+                            <div id="textSection" class="well well-small">
+                                <h:outputLabel id="textFieldTypeLabel" for="textFieldType" value="Field Type:" class="boldLabel"/>
+                                <h:selectOneMenu id="textFieldType" onchange="showCorrectTextFieldType()" style="width: auto" required="true">
+                                    <f:selectItem itemLabel="Line of text" itemValue="line"/>
+                                    <f:selectItem itemLabel="Paragraph of text" itemValue="paragraph"/>
+                                </h:selectOneMenu>
+                                <br />
+                                <br />
+                                <table>
+                                    <tr>
+                                        <td>
+                                    <h:outputLabel value="At least " class ="boldLabel" style="margin-right: 10px"/>
+                                    </td>
+                                    <td>
+                                    <h:inputText id="textValidateSpecificLengthMin" requiredMessage="Please enter a minimum length" 
+                                                 style="width: 40px" maxlength="5">
+                                        <!--<f:validateLongRange minimum="0" maximum="10000" />-->
+                                    </h:inputText>
+                                    </td>
+                                    <td>
+                                    <h:outputLabel value=" characters but no more than " class ="boldLabel" style="margin-right: 10px; margin-left: 10px"/>
+                                    </td>
+                                    <td>
+                                    <h:inputText id="textValidateSpecificLengthMax" requiredMessage="Please enter a maximum length" 
+                                                 style="width: 40px" maxlength="5">
+                                        <!--<f:validateLongRange minimum="1" maximum="10000" />-->
+                                    </h:inputText>
+                                    </td>
+                                    <td>
+                                    <h:outputLabel value=" characters" class ="boldLabel" style="margin-left: 10px"/>
+                                    </td>
+                                    </tr>
+                                </table>                                    
+                                <br />
+                                <div id="textValidateErrorMessageSection">
+                                    <h:outputLabel for="textValidateErrorMessage"><b>Error Message:</b> Displayed when the answer is too long or too short</h:outputLabel>
+                                    <h:inputTextarea id="textValidateErrorMessage" requiredMessage="Please enter the error message to be displayed when the answer is too long or too short" value="The answer you entered must be ___ to ___ characters in length." 
+                                                     rows="2" required="true" style="width: 97%">
+                                        <!--<f:validateLength maximum="1000"></f:validateLength>-->
+                                    </h:inputTextarea>
+                                </div>
+
+                            </div>
+
+                            <!-- Whole Number Section -->
+                            <div id="wholeNumberSection">
+                                <br />
+                                <table>
+                                    <tr>
+                                        <td>
+                                    <h:outputLabel value="At least" class ="boldLabel" style="margin-right: 10px"/>
+                                    </td>
+                                    <td>
+                                    <h:inputText id="wholeNumberMin" requiredMessage="Please enter a minimum number" 
+                                                 style="width: 60px" maxlength="7">
+                                        <!--<f:validateLongRange minimum="-999999" maximum="999999" />-->
+                                    </h:inputText>
+                                    </td>
+                                    <td>
+                                    <h:outputLabel value="but no more than" class ="boldLabel" style="margin-right: 10px; margin-left: 10px"/>
+                                    </td>
+                                    <td>
+                                    <h:inputText id="wholeNumberMax" requiredMessage="Please enter a maximum number" 
+                                                 style="width: 60px" maxlength="7">
+                                        <!--<f:validateLongRange minimum="-999998" maximum="999999" />-->
+                                    </h:inputText>
+                                    </td>
+                                    </tr>
+                                </table>
+                                <br />
+                                <div id="wholeNumberErrorMessageSection">
+                                    <h:outputLabel for="wholeNumberErrorMessage"><b>Error Message:</b> Displayed when the answer is not in the proper range</h:outputLabel>
+                                    <h:inputTextarea id="wholeNumberErrorMessage" requiredMessage="Please enter the error message to be displayed when the answer is not in the proper range" value="The answer you entered is not in the proper range. Please enter a number that is at least ___ but no more than ___." 
+                                                     rows="2" required="true" style="width: 97%">
+                                        <!--<f:validateLength maximum="1000"></f:validateLength>-->
+                                    </h:inputTextarea>
+                                </div>
+                            </div>
+
+                            <!-- Decimal Number Section -->
+                            <div id="decimalNumberSection" class="well well-small">
+                                <br />
+                                <table>
+                                    <tr>
+                                        <td>
+                                    <h:outputLabel value="At least" class ="boldLabel" style="margin-right: 10px"/>
+                                    </td>
+                                    <td>
+                                    <h:inputText id="decimalNumberMin" requiredMessage="Please enter a minimum number" 
+                                                 style="width: 140px" maxlength="17">
+                                        <!--<f:validateDoubleRange minimum="-999999" maximum="999999" />-->
+                                    </h:inputText>
+                                    </td>
+                                    <td>
+                                    <h:outputLabel value="but no more than" class ="boldLabel" style="margin-right: 10px; margin-left: 10px"/>
+                                    </td>
+                                    <td>
+                                    <h:inputText id="decimalNumberMax" requiredMessage="Please enter a maximum number" 
+                                                 style="width: 140px" maxlength="17">
+                                        <!--                                        <f:validateDoubleRange minimum="-999998" maximum="999999" />-->
+                                    </h:inputText>
+                                    </td>
+                                    <td>
+                                    <h:outputLabel value="to" class ="boldLabel" style="margin-right: 10px; margin-left: 10px"/>
+                                    </td>
+                                    <td>
+                                    <h:inputText id="decimalNumberPlaces" requiredMessage="Please enter the number of decimal places" 
+                                                 style="width: 18px" maxlength="2">
+                                        <!--<f:validateLongRange minimum="1" maximum="10" />-->
+                                    </h:inputText>
+                                    </td>
+                                    <td>
+                                    <h:outputLabel value="decimal places" class ="boldLabel" style="margin-left: 10px"/>
+                                    </td>
+                                    </tr>
+                                </table>
+                                <br />
+                                <div id="decimalNumberErrorMessageSection">
+                                    <h:outputLabel for="decimalNumberErrorMessage"><b>Error Message:</b> Displayed when the answer is not in the proper range</h:outputLabel>
+                                    <h:inputTextarea id="decimalNumberErrorMessage" requiredMessage="Please enter the error message to be displayed when the answer is not in the proper range" value="The answer you entered is not in the proper range. Please enter a number that is at least ___ but no more than ___ to ___ decimal places." 
+                                                     rows="2" required="true" style="width: 97%">
+                                        <!--<f:validateLength maximum="1000"></f:validateLength>-->
+                                    </h:inputTextarea>
+                                </div>
+                            </div>
+
+                            <!-- Date Section -->
+                            <div id="dateSection" class="well well-small">
+                                <span>Date Section</span>
+                            </div>
+
+                            <!-- Multiple Choice Section -->
+                            <div id="multipleChoiceAmountSection">
+                                <h:outputLabel for="multipleChoiceAmount" value="Number of answers the user may select:" class ="boldLabel"/>
+                                <h:selectOneMenu id="multipleChoiceAmount" onchange="showCorrectMultipleChoiceAmount()" style="width: auto" required="true">
+                                    <f:selectItem itemLabel="1 Answer" itemValue="1"/>
+                                    <f:selectItem itemLabel="2 Answers" itemValue="2"/>
+                                    <f:selectItem itemLabel="3 Answers" itemValue="2"/>
+                                    <f:selectItem itemLabel="4 Answers" itemValue="2"/>
+                                    <f:selectItem itemLabel="5 Answers" itemValue="2"/>
+                                    <f:selectItem itemLabel="6 Answers" itemValue="2"/>
+                                    <f:selectItem itemLabel="7 Answers" itemValue="2"/>
+                                    <f:selectItem itemLabel="8 Answers" itemValue="2"/>
+                                    <f:selectItem itemLabel="9 Answers" itemValue="2"/>
+                                    <f:selectItem itemLabel="10 Answers" itemValue="2"/>
+                                    <f:selectItem itemLabel="Unlimited Answers" itemValue="unlimited"/>
+                                </h:selectOneMenu>
+                            </div>
+                            <div id="multipleChoiceTypeSection">
+                                <h:outputLabel id="multipleChoiceDisplayTypeLabel" for="multipleChoiceDisplayType" value="Display Type:" class ="boldLabel"/>
+                                <h:selectOneMenu id="multipleChoiceDisplayType" onchange="showCorrectMultipleChoice()" style="width: auto" required="true">
+                                    <f:selectItem itemLabel="Radio Buttons" itemValue="radio"/>
+                                    <f:selectItem itemLabel="Drop-down List" itemValue="dropdown"/>
+                                </h:selectOneMenu>
+                            </div>
+
+                            <div id="multipleChoiceSection" class="well well-small">
+                                <h:outputLabel id="multipleChoiceChoicesLabel" for="multipleChoiceChoice" class="boldLabel">Answer choices:</h:outputLabel>
+                                <div class="well well-small">
+                                    <h:inputText id="multipleChoiceChoice" style="width: 85%">
+                                        <!--<f:validateLength maximum="1000"></f:validateLength>-->
+                                    </h:inputText>
+                                    <a id="addChoiceButton" class="btn btn-info pull-right" style="margin-top:3px" onclick="addChoice()">
+                                        <i class="icon-white icon-plus"/>
+                                    </a>
+                                    <br />
+                                    <div style="width: 97%">
+                                        <select size="5" id="multipleChoiceChoices">
+                                        </select>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a class="btn btn-info" onclick="moveChoiceUp()">
+                                            <i class="icon-arrow-up icon-white" /></a>
+                                        <a class="btn btn-info" onclick="moveChoiceDown()">
+                                            <i class="icon-arrow-down icon-white"/></a>
+                                        <a class="btn btn-danger" onclick="removeChoice()">
+                                            <i class="icon-remove icon-white"/></a>
+                                    </div>
+                                </div>
+                                <div class="well well-small">
+                                    <div class="checkbox">
+                                        <label for="multipleChoiceAddOther" class ="boldLabel">
+                                            <input type="checkbox" id="multipleChoiceAddOther" value="#{bean.validateContents}" onchange="showHideMultipleChoiceFieldOther()"/>
+                                            <span>Add "Other" field with textbox</span>
+                                        </label>
+                                    </div>
+                                    <div id="multipleChoiceAddOtherFieldSection">
+                                        <h:outputLabel id="multipleChoiceOtherAnswerTextLabel" for="multipleChoiceOtherAnswerText" value="Answer Label:" class ="boldLabel"/>
+                                        <h:inputText id="multipleChoiceOtherAnswerText" requiredMessage="Please enter an answer label" value="Other (please specify)" 
+                                                     style="width: 97%">
+                                            <!--<f:validateLength maximum="100"></f:validateLength>-->
+                                        </h:inputText>
+                                        <div class="well well-small">
+                                            <h:outputLabel id="multipleChoiceOtherFieldTypeLabel" for="multipleChoiceOtherFieldType" value="Field Type:" class="boldLabel"/>
+                                            <h:selectOneMenu id="multipleChoiceOtherFieldType" onchange="showCorrectMultipleChoiceFieldType()" style="width: auto" required="true">
+                                                <f:selectItem itemLabel="Line of text" itemValue="line"/>
+                                                <f:selectItem itemLabel="Paragraph of text" itemValue="paragraph"/>
+                                            </h:selectOneMenu>
+                                            <div id="multipleChoiceOtherLineSection">
+                                                <h:outputLabel id="multipleChoiceOtherLineCountLabel" for="multipleChoiceOtherLineCount" class="boldLabel">
+                                                    Maximum Number of Characters:
+                                                </h:outputLabel>
+                                                <h:inputText id="multipleChoiceOtherLineCount" requiredMessage="Please enter a line count for the 'other' field" 
+                                                             maxlength="3" style="width: 25px">
+                                                    <!--<f:validateLongRange minimum="1" maximum="100" />-->
+                                                </h:inputText>
+                                            </div>
+                                            <div id="multipleChoiceOtherParagraphSection">
+                                                <h:outputLabel id="multipleChoiceOtherParagraphCountLabel" for="multipleChoiceOtherParagraphCount" class="boldLabel">
+                                                    Rows:
+                                                </h:outputLabel>
+                                                <h:inputText id="multipleChoiceOtherParagraphCount" requiredMessage="Please enter the number of rows for the 'other' field" 
+                                                             maxlength="2" style="width: 18px">
+                                                    <!--<f:validateLongRange minimum="2" maximum="20" />-->
+                                                </h:inputText>
+                                                <h:outputLabel id="multipleChoiceOtherParagraphCountLength" for="multipleChoiceOtherParagraphCount" class="boldLabel">
+                                                    Total Number of Characters:
+                                                </h:outputLabel>
+                                                <h:inputText id="multipleChoiceOtherParagraphLength" requiredMessage="Please enter the number of rows for the 'other' field" 
+                                                             maxlength="5" style="width: 40px">
+                                                    <!--<f:validateLongRange minimum="2" maximum="10000" />-->
+                                                </h:inputText>
+                                            </div>
+                                            <div class="well well-small">
+                                                <h:outputLabel for="multipleChoiceOtherValidate" value="Validation:" class="boldLabel"/>
+                                                <h:selectOneMenu id="multipleChoiceOtherValidate" onchange="showCorrectMultipleChoiceValidationOptions()" style="width: auto">
+                                                    <f:selectItem itemLabel="None" itemValue="none"/>
+                                                    <f:selectItem itemLabel="Must be a specific length" itemValue="specificLength"/>
+                                                    <f:selectItem itemLabel="Must be a whole number" itemValue="wholeNumber"/>
+                                                    <f:selectItem itemLabel="Must be a decimal number" itemValue="decimalNumber"/>
+                                                    <f:selectItem itemLabel="Must be a date (MM/DD/YYYY)" itemValue="date"/>
+                                                </h:selectOneMenu>
+                                                <div id="multipleChoiceOtherValidateSpecificLength">
+                                                    <h:outputLabel for="multipleChoiceOtherValidateSpecificLengthMin" value="Between" class ="boldLabel"/>
+                                                    <h:inputText id="multipleChoiceOtherValidateSpecificLengthMin" requiredMessage="Please enter a minimum length" 
+                                                                 style="width: 40px" maxlength="5">
+                                                        <!--<f:validateLongRange minimum="0" maximum="10000" />-->
+                                                    </h:inputText>
+                                                    <h:outputLabel for="multipleChoiceOtherValidateSpecificLengthMax" value="and" class ="boldLabel"/>
+                                                    <h:inputText id="multipleChoiceOtherValidateSpecificLengthMax" requiredMessage="Please enter a maximum length" 
+                                                                 style="width: 40px" maxlength="5">
+                                                        <!--<f:validateLongRange minimum="1" maximum="10000" />-->
+                                                    </h:inputText>
+                                                </div>
+                                                <div id="multipleChoiceOtherValidateWholeNumber">
+                                                    <h:outputLabel for="multipleChoiceOtherValidateWholeNumberMin" value="Between" class ="boldLabel"/>
+                                                    <h:inputText id="multipleChoiceOtherValidateWholeNumberMin" requiredMessage="Please enter a minimum number" 
+                                                                 style="width: 60px" maxlength="7">
+                                                        <!--<f:validateLongRange minimum="-999999" maximum="999999" />-->
+                                                    </h:inputText>
+                                                    <h:outputLabel for="multipleChoiceOtherValidateWholeNumberMax" value="and" class ="boldLabel"/>
+                                                    <h:inputText id="multipleChoiceOtherValidateWholeNumberMax" requiredMessage="Please enter a maximum number" 
+                                                                 style="width: 60px" maxlength="7">
+                                                        <!--<f:validateLongRange minimum="-999998" maximum="999999" />-->
+                                                    </h:inputText>
+                                                </div>
+                                                <div id="multipleChoiceOtherValidateDecimalNumber">
+                                                    <h:outputLabel for="multipleChoiceOtherValidateDecimalNumberPlaces" value="To how many decimal places" class ="boldLabel"/>
+                                                    <h:inputText id="multipleChoiceOtherValidateDecimalNumberPlaces" requiredMessage="Please enter the number of decimal places" 
+                                                                 style="width: 18px" maxlength="2">
+                                                        <!--<f:validateLongRange minimum="1" maximum="10" />-->
+                                                    </h:inputText>
+                                                    <h:outputLabel for="multipleChoiceOtherValidateDecimalNumberMin" value="Between" class ="boldLabel"/>
+                                                    <h:inputText id="multipleChoiceOtherValidateDecimalNumberMin" requiredMessage="Please enter a minimum number" 
+                                                                 style="width: 140px" maxlength="17">
+                                                        <f:validateDoubleRange minimum="-999999" maximum="999999" />
+                                                    </h:inputText>
+                                                    <h:outputLabel for="multipleChoiceOtherValidateDecimalNumberMax" value="and" class ="boldLabel"/>
+                                                    <h:inputText id="multipleChoiceOtherValidateDecimalNumberMax" requiredMessage="Please enter a maximum number" 
+                                                                 style="width: 140px" maxlength="17">
+                                                        <!--<f:validateDoubleRange minimum="-999998" maximum="999999" />-->
+                                                    </h:inputText>
+                                                </div>
+                                                <div id="multipleChoiceOtherValidateDate">
+                                                    <h:outputLabel for="multipleChoiceOtherValidateDateMin" value="Between" class ="boldLabel"/>
+                                                    <h:inputText id="multipleChoiceOtherValidateDateMin" requiredMessage="Please enter a minimum date" 
+                                                                 style="width: 80px" maxlength="10">
+                                                        <!-- TODO validate date using regex <f:validateRegex -->
+                                                    </h:inputText>
+                                                    <h:outputLabel for="multipleChoiceOtherValidateDateMax" value="and" class ="boldLabel"/>
+                                                    <h:inputText id="multipleChoiceOtherValidateDateMax" requiredMessage="Please enter a maximum date" 
+                                                                 style="width: 80px" maxlength="10">
+                                                    </h:inputText>
+                                                </div>
+                                                <div id="multipleChoiceOtherValidateErrorMessageSection">
+                                                    <h:outputLabel for="multipleChoiceOtherValidateErrorMessage"><b>Error Message:</b> Displayed when the answer is in an invalid format</h:outputLabel>
+                                                    <h:inputTextarea id="multipleChoiceOtherValidateErrorMessage" requiredMessage="Please enter the error message to be displayed when the answer is in an invalid format" value="The answer you entered is in an invalid format." 
+                                                                     rows="2" required="true" style="width: 97%">
+                                                        <!--<f:validateLength maximum="1000"></f:validateLength>-->
+                                                    </h:inputTextarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </p:layoutUnit>
+
+                </p:layout>
+            </h:form> 
+        </h:body>
+
+    </f:view>
+
+    <script>
+        $(document).ready(function() {
+            showCorrectQuestionSettings();
+            showHideRequiredSection();
+            showHideMultipleChoiceFieldOther();
+            $("#form\\:multipleChoiceChoice").keypress(function (event) {                
+                if (event.keyCode == 13) {
+                    event.preventDefault();
+                    $("#addChoiceButton").click();
+                }
+            });
+            $('#message').live('click', function() {
+                $('#sm').hide().show('slow').html('You have successfully registered');
+                setTimeout(function(){ $('#sm').hide(); }, 30000);
+            });
+        });
+    </script>
+</html>
+

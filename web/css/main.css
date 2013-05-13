@@ -1,0 +1,39 @@
+root { 
+    display: block;
+}
+
+.checkboxes label {
+    display: block;
+    float: left;
+    padding-right: 10px;
+    white-space: nowrap;
+}
+
+.checkboxes input {
+    vertical-align: middle;
+}
+
+.checkboxes label span {
+    vertical-align: middle;
+}
+
+textarea {
+    resize: none;
+    columns: 50;
+}
+
+textArea {
+    columns: 50;
+}
+
+.boldLabel {
+    font-weight: bold;
+}
+
+.well {
+    margin: 20px;
+}
+
+.ui-accordion .ui-accordion-content {
+   padding: 0;
+}
